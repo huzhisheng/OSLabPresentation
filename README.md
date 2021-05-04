@@ -28,7 +28,7 @@ sleep比较容易完成，只需从命令行参数中获取到sleep后面跟着�
 
 primes就是ping-pong的进阶问题，还需要了解质数筛选算法，以及dup()函数的作用，当初我在做该题时因为不清楚dup函数的作用导致半天都没想出来此题的思路。
 
-![image-20201017231043674](images\image01.png)
+![image-20201017231043674](./images/image01.png)
 
 该题的算法思想如上图，pipe就相当于不同层之间的通道，每层负责将从上一层得到的数字的所有整数倍值都给筛选掉，只将那些不是整数倍的数字再写入给自己的下一层，例如一开始将所有数字2~35输入给第一层，第一层拿到的第一个数字是2因此将所有2的整数倍数字都淘汰掉，这样第二层拿到的第一个数字是3…以此类推，最后每一层得到的第一个数字组合起来的集合就是所有质数。
 
@@ -78,7 +78,7 @@ if (fork() == 0)
 
 ## 1.3 实验结果
 
-![img](images\image02.jpg)
+![img](./images/image02.jpg)
 
 # Lab2 Shell
 
@@ -86,7 +86,7 @@ if (fork() == 0)
 
 第2个实验要求完成一个基础的shell功能，限制是不能使用malloc函数。xv6自身的sh功能是通过构造几种cmd结构体组成的“cmd树“来实现的，例如下图：
 
-![img](images\image03.png)
+![img](./images/image03.png)
 
 xv6的sh实现主要思想是首先通过parseline(user/sh.c)函数将用户输入的一行参数解析为cmd树，然后再调用rumcmd函数去递归下降式地执行该生成的cmd树，本实验的代码可以借鉴上述思想。
 
@@ -96,7 +96,7 @@ xv6的sh实现主要思想是首先通过parseline(user/sh.c)函数将用户输�
 
 设计思想如下：
 
-![img](images\image04.png)
+![img](./images/image04.png)
 
 将输入的一串字符串看作是 "single_cmd | single_cmd | ..." 即多个single_cmd通过pipe连接起来, 因此把不包含pipe的cmd看作是单个cmd, 把包含pipe的cmd看作是多个 “单个cmd” 的组合体；将pipe_cmd看作是 "single_cmd | pipe_cmd"以此递归下去, 函数每次处理一个single_cmd即可；
 
@@ -172,7 +172,7 @@ d)   调用run_pipe_cmd (argc - i - 1, args + i + 1)；
 
 ## 2.4 实验结果
 
-![img](images\image05.jpg)
+![img](./images/image05.jpg)
 
 # Lab3 Allocator
 
@@ -184,7 +184,7 @@ d)   调用run_pipe_cmd (argc - i - 1, args + i + 1)；
 
 在伙伴系统中，空闲空间首先从概念上被看成大小为![img](file:///C:/Users/SHUAIG~1/AppData/Local/Temp/msohtmlclip1/01/clip_image012.png)的大空间。当有一个内存分配请求时，空闲空间被递归地一分为二，直到刚好可以满足请求的大小（再一分为二就无法满足）。这时，请求的块被返回给用户。例如下例，一个64KB大小的空闲空间被切分以便提供7KB的块。
 
-![img](images\image06.png)
+![img](./images/image06.png)
 
 伙伴系统的最大功能在于块被释放的时候时，如果将这个8KB的块归还给空闲列表，分配沉痼会检查其“伙伴”是否空闲，如果是，就合并这两块。这个递归合并过程继续上溯。直到合并整个内存区域，或者某一个块的伙伴还未被释放。
 
@@ -192,7 +192,7 @@ d)   调用run_pipe_cmd (argc - i - 1, args + i + 1)；
 
 在xv6中，伙伴系统是由一系列sz_info构成的，每个sz_info的结构如下：
 
-![img](images\image07.png)
+![img](./images/image07.png)
 
 每个sz_info负责管理**型号为k**（型号为k的块的空间大小为![img](file:///C:/Users/SHUAIG~1/AppData/Local/Temp/msohtmlclip1/01/clip_image018.png)*16KB，k从0开始一直到一个最大值MAXSIZE）的所有块的信息， 其中free是一个双向链表，其中每个节点代表了该型号k的空闲块的物理地址，alloc和split则都各自指向一片空间，其中数据的各位代表着其管理的某个型号k的块的状态，例如：第i个型号k的块已经被分配了，而且被分割split了，则alloc和split所指向的空间的第i位就为1。这里第i个型号k的块，其实就是该块的首地址减去buddy allocator管理的空间首地址bd_base再整除型号k的块大小的商。
 
@@ -200,7 +200,7 @@ d)   调用run_pipe_cmd (argc - i - 1, args + i + 1)；
 
 在知道单个sz_info的代表的含义后，就能很清晰地明白xv6系统中整个buddy allocator的结构，如下图：
 
-![img](images\image08.png)
+![img](./images/image08.png)
 
 buddy allocator中的sz_info数组中第i个sz_info就负责管理所有型号为i的块，任何一个块被标记为split后就会在下层sz_info中被进一步管理，而xv6中允许的最小块大小为16B即型号0的块。
 
@@ -212,7 +212,7 @@ buddy allocator中的sz_info数组中第i个sz_info就负责管理所有型号�
 
 在其余内存空间都配置好后，伙伴系统就会开始初始化用户所能使用的内存空间（kernel/buddy.c中bd_initfree函数），对于这段内存空间，其最坏的情况发生在空间的开始和空间的末尾，因为在空间内部的区域buddy allocator只需分配型号最大的块即可，而在空间的两端存在空间碎片就需要不断细化进入下层sz_info（越下层的sz_info管理的块就越小），直到到达能管理这些空间碎片的sz_info为止。例如下图：
 
-![img](images\image09.png)
+![img](./images/image09.png)
 
 ## 3.3 算法分析
 
@@ -242,7 +242,7 @@ buddy allocator中的sz_info数组中第i个sz_info就负责管理所有型号�
 
 ## 3.4 实验结果
 
-![img](images\image10.jpg)
+![img](./images/image10.jpg)
 
 # Lab4 Lazy Page Allocation
 
@@ -252,11 +252,11 @@ buddy allocator中的sz_info数组中第i个sz_info就负责管理所有型号�
 
 当然本实验第一个要求是实现一个打印页表的功能vm_print，这个函数只要了解了PTE的功能以及原理，同时阅读了xv6 book中第三章关于xv6的PTE实际实现就可以很快完成。具体来说，在xv6中使用了三级页表的结构，例如一个虚拟地址va，共64位，前25位没有使用（作为保留位），后12位作为页内偏移量（即xv6中一页也是4KB），剩下的27位就是三级页表所要用的三个VPN了，例如下图中L2,L1,L0就分别代表了在各自页表中的下标（取自xv6 book）：
 
-![img](images\image11.jpg)
+![img](./images/image11.jpg)
 
 本实验的第二个要求就是实现Lazy Allocation，最后所需写的代码较少，不过要想通过所有usertests的话最后还应针对下图的六个要求分别做修改才行。
 
-![img](images\image12.jpg)
+![img](./images/image12.jpg)
 
 Lazy Allocation主要的实现在kernel/trap.c中，在trap中需要我们正确处理因为缺页造成的trap。要求我们在缺页处理中才进行真正的物理内存分配(kalloc())并插入相应PTE到该进程的页表中(mappages())。
 
@@ -312,7 +312,7 @@ Lazy Allocation主要的实现在kernel/trap.c中，在trap中需要我们正确
 
 这个实验的make grade中第一个测试是关于vmprint的，这个测试完全是硬编码检测（就是比较两个字符串是否完全相同，我反复检查了很久才发现是空格的位置不对），因此需要我们格外仔细。最后的结果如下图：
 
-![img](images\image13.jpg)
+![img](./images/image13.jpg)
 
 # Lab5 Copy on Write Fork for xv6
 
@@ -348,7 +348,7 @@ kernel/kalloc.c是xv6内核管理物理内存的文件，该文件中的kmem上�
 
 接下来就是对fork过程中涉及到内存的部分的修改，以及页写入错误的处理。首先将PTE中未使用的标志位——第8位作为PTE_COW，PTE_COW若为1代表该物理页是被多个虚拟页映射，正处于写时复制的状态。
 
-![img](images\image14.jpg)
+![img](./images/image14.jpg)
 
 fork创建子进程的过程中会调用uvmcopy函数(kernel/vm.c)来将父进程的物理内存以及页表复制到子进程。之前的uvmcopy函数，对于父进程的每一物理页，都会为子进程分配(kalloc)一个新的物理页，并调用memmov将父进程的物理页中的数据复制到子进程的新物理页中，之后再调用mappages将新的物理页以及该虚拟地址插入到子进程的页表中，且该新物理页的标志位和父进程的对应物理页保持不变。而在新的uvmcopy函数中，不再为子进程分配新物理页，转而代之的是首先将该物理页在父进程页表中的PTE项的PTE_W清0，PTE_COW置为1，接着直接将父进程的物理页和对应的虚拟地址插入到子进程的页表中，PTE的flags保持和父进程的相同。
 
@@ -366,7 +366,7 @@ copyout函数(kernel/vm.c)也需要修改，copyout函数功能是将内核物�
 
 ## 5.3 实验结果
 
-![img](images\image15.png)
+![img](./images/image15.png)
 
 # Lab6 user-level threads and alarm
 
@@ -380,7 +380,7 @@ copyout函数(kernel/vm.c)也需要修改，copyout函数功能是将内核物�
 
 要实现线程的切换首先要保证在进程切换时能够安全地处理寄存器的使用问题，首先需要了解RISCV寄存器的结构，如下图：
 
-![img](images\image16.jpg)
+![img](./images/image16.jpg)
 
 在RISCV中，通常会出现a调用b的情景，这时候a就是Caller调用方，b就是Callee被调用方，在上图最右边一栏”Saver”代表了对应寄存器由谁来负责保存：
 
@@ -410,7 +410,7 @@ copyout函数(kernel/vm.c)也需要修改，copyout函数功能是将内核物�
 
 第二个任务的代码量较少，重要的是理解整个alarm执行的过程，示意图如下：
 
-![img](images\image17.png)
+![img](./images/image17.png)
 
 trampoline.s完成用户模式和内核模式之间的转换。每次发生用户模式和内核模式转换的时候，trampoline.s会将user space的相应的寄存器的值保存到当前进程的trapframe中，trapframe还保存有四个kernel开头的内核寄存器的值，当切换到内核模式时候会将这四个寄存器加载到对应寄存器中，以此完成由用户模式到内核模式的切换，这里需要注意satp是保存一级页表首地址的寄存器，当satp切换后就代表使用的虚拟地址不再是user space了而是kernel space（xv6中kernel和user的虚拟地址空间是分开的，不像Linux是kernel和user共存于同一个虚拟地址空间）。从内核模式到用户模式的操作差不多，就是保存四个kernel开头的寄存器的值，再加载之前保存的trapframe中的用户寄存器的值到相应寄存器。
 
@@ -424,7 +424,7 @@ trampoline.s完成用户模式和内核模式之间的转换。每次发生用�
 
 ## 6.3 实验结果
 
-![img](images\image18.jpg)
+![img](./images/image18.jpg)
 
 # Lab7 locks
 
@@ -442,7 +442,7 @@ trampoline.s完成用户模式和内核模式之间的转换。每次发生用�
 
 kernel/bio.c文件是xv6系统中管理硬盘块缓存的地方，其中bcache拥有一片缓存区域buf以及一个锁lock，同时还需注意bcache将buf组织成一个双向循环链表，该链表有一个头结点head方便搜索buf。按照之前的结构，多个进程同时想要使用bcache的话，必须抢用一个lock，因此效率非常的低。为了提高并行程度，将bcache从单独一个链表(一个head)改变为用多个链表(多个head)，即多个bucket。例如下图：
 
-![img](images\image19.png)
+![img](./images/image19.png)
 
 每当一个进程想要获取设备号为dev，块号为blockno的磁盘块时，bcache会将blockno进行哈希计算，计算出该块号对应的桶号，并申请该桶的lock，获取到该桶的lock后就可在其中的双向链表中搜索，看bcache是否已经缓存了该块。如果缓存有该块（dev和blockno都符合，则使块的引用数加1，返回该块；如果在桶中没有找到，则就去寻找一个空闲的缓存块buf作为该磁盘块的缓存。如果自己桶中没有空闲的buf（refcnt等于0），就去其它桶寻找空闲块，将找到的空闲块从原来的双向链表中分离出来，插入到自己桶双向链表的头部。
 
@@ -454,7 +454,7 @@ kernel/bio.c文件是xv6系统中管理硬盘块缓存的地方，其中bcache�
 
 ## 7.3 实验结果
 
-![img](images\image20.jpg)
+![img](./images/image20.jpg)
 
 # Lab8 file system
 
@@ -470,7 +470,7 @@ kernel/bio.c文件是xv6系统中管理硬盘块缓存的地方，其中bcache�
 
 在操作系统中，文件由inode及相关的数据块组成，例如下图（取自xv6 book）
 
-![img](images\image21.jpg)
+![img](./images/image21.jpg)
 
 在xv6中，dinode是inode在硬盘中的结构体，inode是inode中内存中的结构体。
 
@@ -512,7 +512,7 @@ itrunc函数的功能是释放掉一个文件在磁盘中的所有数据，在�
 
 ## 8.3 实验结果
 
-![img](images\image22.jpg)
+![img](./images/image22.jpg)
 
 在grade-lab-fs文件中，我将bigfile测试的timeout（最大运行时间）从180调成了300，可能是因为虚拟机配置的内核数不够导致运行时间超时？总之之前的bigfile测试未能通过，调整时间限制后便能通过全部测试。
 
@@ -520,7 +520,7 @@ itrunc函数的功能是释放掉一个文件在磁盘中的所有数据，在�
 
 ## 9.1 内容分析
 
-![img](images\image23.png)
+![img](./images/image23.png)
 
 本实验要求我们实现UNIX系统中的mmap内存映射功能，具体作用是将磁盘中的文件指定区间的数据直接映射到某个进程的虚拟空间中，并且允许同一个文件的指定数据空间映射到多个进程的虚拟地址，这些虚拟地址可以共享同一片物理内存也可以不必。
 
@@ -580,7 +580,7 @@ used代表该VMA结构体是否已被使用；addr代表该VMA所记录的虚拟
 
 ## 9.3 实验结果
 
-![img](images\image24.png)
+![img](./images/image24.png)
 
 # Lab10 networking
 
@@ -596,7 +596,7 @@ used代表该VMA结构体是否已被使用；addr代表该VMA所记录的虚拟
 
 要实现E1000网卡驱动程序中接受和发送，除了借鉴Hints之外还需了解以下E1000驱动知识：
 
-![img](images\image25.jpg)
+![img](./images/image25.jpg)
 
 在E1000驱动中，每接受或传送一个数据帧都是在一个循环缓冲队列中（所以有两条队列，接受缓冲队列和发送缓冲队列），也就是上图中的结构。该缓冲队列中每一条记录都是一个描述符Descriptor（Receive Descriptor和Transmit Descriptor），描述符中记录了接受数据或发送数据所要用到的相关信息。该循环缓冲队列主要有两个指针Head和Tail，其中Head和Tail之间的区域的描述符(白色区域)代表着还未被准备好的描述符（代表该描述符为空或者该描述符相关的数据帧正在发送中（on the flying）），而Tail到Head之间的灰色区域则是代表已经被硬件接收完毕或者已经准备好相关数据就等软件处理的描述符。
 
@@ -604,11 +604,11 @@ used代表该VMA结构体是否已被使用；addr代表该VMA所记录的虚拟
 
 接受描述符如下图：
 
-![img](images\image26.jpg)
+![img](./images/image26.jpg)
 
 Buffer Address就是将接受的数据所要存放的物理内存地址，Status字段则是存放了该数据帧以及该描述符的相关状态（例如该描述符是否已被使用或者该描述符是否已经被硬件处理好可以使用）。下图是Status字段详细结构图：
 
-![img](images\image27.jpg)
+![img](./images/image27.jpg)
 
 这里需要重点说明的是一个描述符只有当它的数据被硬件接收完毕后才应该调用E1000驱动程序的e1000_recv函数来进行处理，而每当一个数据帧的数据被硬件接收完毕，即可以对其进行接收处理时，在Receive Descriptor中Status字段的DD标志位将会被置为1。
 
@@ -616,11 +616,11 @@ Buffer Address就是将接受的数据所要存放的物理内存地址，Status
 
 发送描述符如下图：
 
-![img](images\image28.jpg)
+![img](./images/image28.jpg)
 
 Buffer Address是已经准备好的数据物理内存首地址，在本实验中我们还需了解的字段是STA和CMD，STA就是Status字段，其中的DD标志位依然是待该描述符已经被硬件处理完毕就会被置为1。CMD是在发送过程中的一些参数设置，CMD字段结构如下图：
 
-![img](images\image29.jpg)
+![img](./images/image29.jpg)
 
 在网卡驱动的datasheet中有每个标志位的详细说明，在本实验中我们只需要了解RS字段和EOP字段，RS标志位是告诉硬件，当准备好该发送描述符后需要将Status字段中的DD标志位置为1，由于我们实验中要用到DD标志位来判断每个发送描述符是否准备好，因此RS需要被置为1；EOP标志位是代表着该数据帧是该网络层数据包的最后一帧，在本实验中我们并未涉及到网络数据包的分组，因此传输的每帧都是数据包的最后一帧，因此EOP需要被置为1。
 
@@ -688,7 +688,7 @@ struct sock {
 
 ## 10.3 实验结果
 
-![img](images\image30.jpg)
+![img](./images/image30.jpg)
 
 # GitHub地址
 
