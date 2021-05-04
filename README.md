@@ -188,11 +188,11 @@ d)   调用run_pipe_cmd (argc - i - 1, args + i + 1)；
 
 ## 3.2 设计方法
 
-在伙伴系统中，空闲空间首先从概念上被看成大小为![img](file:///C:/Users/SHUAIG~1/AppData/Local/Temp/msohtmlclip1/01/clip_image012.png)的大空间。当有一个内存分配请求时，空闲空间被递归地一分为二，直到刚好可以满足请求的大小（再一分为二就无法满足）。这时，请求的块被返回给用户。例如下例，一个64KB大小的空闲空间被切分以便提供7KB的块。
+在伙伴系统中，空闲空间首先从概念上被看成大小为2^N的大空间。当有一个内存分配请求时，空闲空间被递归地一分为二，直到刚好可以满足请求的大小（再一分为二就无法满足）。这时，请求的块被返回给用户。例如下例，一个64KB大小的空闲空间被切分以便提供7KB的块。
 
 ![img](./images/image06.png)
 
-伙伴系统的最大功能在于块被释放的时候时，如果将这个8KB的块归还给空闲列表，分配沉痼会检查其“伙伴”是否空闲，如果是，就合并这两块。这个递归合并过程继续上溯。直到合并整个内存区域，或者某一个块的伙伴还未被释放。
+伙伴系统的最大功能在于块被释放的时候时，如果将这个8KB的块归还给空闲列表，buddy allocator会检查其“伙伴”是否空闲，如果是，就合并这两块。这个递归合并过程继续上溯。直到合并整个内存区域，或者某一个块的伙伴还未被释放。
 
  
 
@@ -200,7 +200,7 @@ d)   调用run_pipe_cmd (argc - i - 1, args + i + 1)；
 
 ![img](./images/image07.png)
 
-每个sz_info负责管理**型号为k**（型号为k的块的空间大小为![img](file:///C:/Users/SHUAIG~1/AppData/Local/Temp/msohtmlclip1/01/clip_image018.png)*16KB，k从0开始一直到一个最大值MAXSIZE）的所有块的信息， 其中free是一个双向链表，其中每个节点代表了该型号k的空闲块的物理地址，alloc和split则都各自指向一片空间，其中数据的各位代表着其管理的某个型号k的块的状态，例如：第i个型号k的块已经被分配了，而且被分割split了，则alloc和split所指向的空间的第i位就为1。这里第i个型号k的块，其实就是该块的首地址减去buddy allocator管理的空间首地址bd_base再整除型号k的块大小的商。
+每个sz_info负责管理**型号为k**（型号为k的块的空间大小为(2^k)*16KB，k从0开始一直到一个最大值MAXSIZE）的所有块的信息， 其中free是一个双向链表，其中每个节点代表了该型号k的空闲块的物理地址，alloc和split则都各自指向一片空间，其中数据的各位代表着其管理的某个型号k的块的状态，例如：第i个型号k的块已经被分配了，而且被分割split了，则alloc和split所指向的空间的第i位就为1。这里第i个型号k的块，其实就是该块的首地址减去buddy allocator管理的空间首地址bd_base再整除型号k的块大小的商。
 
  
 
@@ -210,7 +210,7 @@ d)   调用run_pipe_cmd (argc - i - 1, args + i + 1)；
 
 buddy allocator中的sz_info数组中第i个sz_info就负责管理所有型号为i的块，任何一个块被标记为split后就会在下层sz_info中被进一步管理，而xv6中允许的最小块大小为16B即型号0的块。
 
-在xv6的buddy allocator初始化的时候系统分配的物理内存并不一定是16字节对齐或者刚好是![img](file:///C:/Users/SHUAIG~1/AppData/Local/Temp/msohtmlclip1/01/clip_image012.png)大小，因此在初始化的时候会将伙伴系统的内存首地址向后移动到第一个十六字节对齐的位置作为首地址bd_base，若不是![img](file:///C:/Users/SHUAIG~1/AppData/Local/Temp/msohtmlclip1/01/clip_image012.png)大小则在初始化的时候会将内存大小扩展到第一个![img](file:///C:/Users/SHUAIG~1/AppData/Local/Temp/msohtmlclip1/01/clip_image012.png)满足![img](file:///C:/Users/SHUAIG~1/AppData/Local/Temp/msohtmlclip1/01/clip_image022.png)，而系统允许的最大块的型号就为N-1（即最大的块大小为![img](file:///C:/Users/SHUAIG~1/AppData/Local/Temp/msohtmlclip1/01/clip_image024.png)*16B）。
+在xv6的buddy allocator初始化的时候系统分配的物理内存并不一定是16字节对齐或者刚好是2^N大小，因此在初始化的时候会将伙伴系统的内存首地址向后移动到第一个十六字节对齐的位置作为首地址bd_base，若不是2^N大小则在初始化的时候会将内存大小扩展到第一个2^N满足2^N >= 系统分配的内存，而系统允许的最大块的型号就为N-1（即最大的块大小为2^(N-1) * 16B）。
 
 同时buddy allocator在完成内存空间的初始化后，还会将前面部分的空间作为sz_info数组以及每个sz_info中alloc和free字符数组的存储区域，为了让这部分区域不被使用，伙伴系统在初始化时就将这部分区域在各个层次的sz_info同时标记为已分配和已切分的状态（kernel/buddy.c中bd_mark_data_structures函数）；
 
@@ -334,7 +334,7 @@ Lazy Allocation主要的实现在kernel/trap.c中，在trap中需要我们正确
 
 kernel/kalloc.c是xv6内核管理物理内存的文件，该文件中的kmem上记录了当前物理内存的使用情况。因此为了实现上述记录功能，在kmem中新建一个uint* ref_count指针来代表各个物理页的引用数量，例如ref_count[100]就代表了第100页的引用数量。因此我们需要在kinit()初始化函数中完成对该部分区域的划分和创建，之前的kmem管理的物理内存从end到PHYSTOP，添加了ref_count后，kem管理的物理内存范围就变成了从end+pa_offset到PHYSTOP，其中pa_offset是计算PHYSTOP到end一共有多少物理页并且每个物理页占sizeof(uint)的ref_count空间，因此
 
-![img](file:///C:/Users/SHUAIG~1/AppData/Local/Temp/msohtmlclip1/01/clip_image036.png)
+![img](./images/image31.png)
 
 在将存储ref_count的内存区域创建出来后，我们还应修改kalloc.c中的其它函数以实现ref_count的记录引用数功能。
 
@@ -390,9 +390,9 @@ copyout函数(kernel/vm.c)也需要修改，copyout函数功能是将内核物�
 
 在RISCV中，通常会出现a调用b的情景，这时候a就是Caller调用方，b就是Callee被调用方，在上图最右边一栏”Saver”代表了对应寄存器由谁来负责保存：
 
-![img](file:///C:/Users/SHUAIG~1/AppData/Local/Temp/msohtmlclip1/01/clip_image044.png)该寄存器由调用方自己负责保存，被调用方可以修改这些寄存器而不用保护；
+Caller Saved：该寄存器由调用方自己负责保存，被调用方可以修改这些寄存器而不用保护；
 
-![img](file:///C:/Users/SHUAIG~1/AppData/Local/Temp/msohtmlclip1/01/clip_image046.png)该寄存器由被调用方负责保存，在退出被调用方时，被调用方需要保证这些寄存器的值没被更改；
+Callee Saved：该寄存器由被调用方负责保存，在退出被调用方时，被调用方需要保证这些寄存器的值没被更改；
 
  
 
@@ -634,11 +634,11 @@ Buffer Address是已经准备好的数据物理内存首地址，在本实验中
 
 还需要说明的是，在网卡驱动中为每个文件符还配置了一个缓冲区指针，例如下述代码：
 
-\#define RX_RING_SIZE 16
-
-static struct rx_desc rx_ring[RX_RING_SIZE] __attribute__((aligned(16)));
-
-static struct mbuf *rx_mbufs[RX_RING_SIZE];
+> #define RX_RING_SIZE 16
+>
+> static struct rx_desc rx_ring[RX_RING_SIZE] __ attribute__((aligned(16)));
+>
+> static struct mbuf *rx_mbufs[RX_RING_SIZE];
 
 接受缓冲队列rx_ring中每个文件描述符都对应一个mbuf的指针，指向数据mbuf的存储地址，在mbuf中我们可以给数据加上或删去各种协议的头字段，mbuf的功能就是方便加载和删除各层协议的头字段的。
 
@@ -654,21 +654,21 @@ static struct mbuf *rx_mbufs[RX_RING_SIZE];
 
 本实验中实现socket套接字功能需要完善四个函数的功能，在kernel/sysnet.c中的sockrecvudp, sockclose, sockread, sockwrite，首先需要了解的是socket套接字的结构体sock：
 
-struct sock {
-
- struct sock *next; // the next socket in the list
-
- uint32 raddr;   // the remote IPv4 address
-
- uint16 lport;   // the local UDP port number
-
- uint16 rport;   // the remote UDP port number
-
- struct spinlock lock; // protects the rxq
-
- struct mbufq rxq; // a queue of packets waiting to be received
-
-};
+> struct sock {
+>
+> ​	struct sock *next; // the next socket in the list
+>
+> ​	uint32 raddr;   // the remote IPv4 address
+>
+> ​	uint16 lport;   // the local UDP port number
+>
+> ​	uint16 rport;   // the remote UDP port number
+>
+> ​	struct spinlock lock; // protects the rxq
+>
+> ​	struct mbufq rxq; // a queue of packets waiting to be received
+>
+> };
 
 在xv6中对于所有打开的socket都存储在单向链表sockets中，sock结构体中next指针就是指向该链表中的下一个socket。在xv6系统中对于socket也是作为文件进行表示的，其文件类型为FD_SOCK，在fileread和filewrite中若判断出文件类型为FD_SOCK就需要调用sockread和sockwrite。
 
