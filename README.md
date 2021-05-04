@@ -4,6 +4,12 @@
 
 
 
+# GitHub地址
+
+本实验完整的xv6项目代码地址为：https://github.com/huzhisheng/xv6-riscv-fall19
+
+
+
 # Lab1 Utilities
 
 ## 1.1 内容分析
@@ -690,9 +696,7 @@ struct sock {
 
 ![img](./images/image30.jpg)
 
-# GitHub地址
 
-本实验完整的xv6项目代码地址为：https://github.com/huzhisheng/xv6-riscv-fall19
 
 # OS实验改进建议
 
